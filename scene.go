@@ -5,10 +5,11 @@ import (
 	"github.com/google/uuid"
 	"log"
 	"siaod/course/clock"
+	"siaod/course/pkg/bus"
 )
 
 type Scene struct {
-	buses   map[uuid.UUID]Bus
+	buses   map[uuid.UUID]bus.Bus
 	drivers map[uuid.UUID]Driver
 	tt      *TimeTable
 }

@@ -1,55 +1,67 @@
-package course
+package v2
 
 import (
 	"github.com/google/uuid"
+	"siaod/course"
 	"siaod/course/clock"
+	"siaod/course/pkg/bus"
 	"sync"
 	"time"
 )
 
 type PathItem struct {
+	ID        uuid.UUID
 	TimeBegin time.Time
 	TimeEnd   time.Time
-	Path      Path
+	Path      course.Path
+	DriverID  uuid.UUID
+	BusID     uuid.UUID
 	InWork    bool
 }
+
 type TimeTable struct {
 	driveTimes map[uuid.UUID]map[uuid.UUID]time.Duration // Время движения между станциями
-	stations   map[uuid.UUID]Station                     // Станции по id
-	path       map[uuid.UUID][]PathItem
+	stations   map[uuid.UUID]course.Station              // Станции по id
+	path       map[uuid.UUID]PathItem
 	pathMu     sync.RWMutex
 }
 
 func NewTimeTable() *TimeTable {
 	return &TimeTable{
 		driveTimes: make(map[uuid.UUID]map[uuid.UUID]time.Duration),
-		stations:   make(map[uuid.UUID]Station),
+		stations:   make(map[uuid.UUID]course.Station),
 		path:       make(map[uuid.UUID][]PathItem),
 	}
 }
 
-func (tt *TimeTable) GetNextPathItem() *Path {
+func (tt *TimeTable) GetNextPathItem() *course.Path {
 	best := new(PathItem)
 
 	tt.pathMu.Lock()
 	defer tt.pathMu.Unlock()
 	for _, val := range tt.path {
-		for i, item := range val {
-			if item.InWork {
-				continue
-			}
-			if best == nil || item.TimeBegin.Before(best.TimeBegin) {
-				best = &val[i]
-			}
+		if val.InWork {
+			continue
+		}
+		if best == nil || val.TimeBegin.Before(best.TimeBegin) {
+			best = &val
 		}
 	}
-	best.InWork = true
-
 	return &best.Path
 }
 
+func (tt *TimeTable) SetDriverWithBusOnPath(driver course.Driver, bus bus.Bus, pathID uuid.UUID) {
+	tt.pathMu.Lock()
+	defer tt.pathMu.Unlock()
+	path := tt.path[pathID]
+	path.BusID = bus.ID
+	path.DriverID = driver.ID()
+	path.InWork = true
+	tt.path[pathID] = path
+}
+
 // AddStation добавляет станцию в расписание
-func (tt *TimeTable) AddStation(station Station) {
+func (tt *TimeTable) AddStation(station course.Station) {
 	tt.stations[station.GetID()] = station
 }
 
@@ -62,12 +74,12 @@ func (tt *TimeTable) AddDriveTime(from, to uuid.UUID, duration time.Duration) {
 }
 
 // GetDriveTime возвращает время движения между станциями
-func (tt *TimeTable) GetDriveTime(prev, next Point) time.Time {
+func (tt *TimeTable) GetDriveTime(prev, next course.Point) time.Time {
 	duration := tt.driveTimes[prev.ID][next.ID]
 	return clock.C().Now().Add(duration)
 }
 
 // GetStationByID возвращает станцию по id
-func (tt *TimeTable) GetStationByID(stationID uuid.UUID) Station {
+func (tt *TimeTable) GetStationByID(stationID uuid.UUID) course.Station {
 	return tt.stations[stationID]
 }

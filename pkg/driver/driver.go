@@ -1,10 +1,20 @@
-package course
+package driver
 
 import (
 	"github.com/google/uuid"
 	"siaod/course/clock"
 	"time"
 )
+
+type Driver interface {
+	ID() uuid.UUID
+	NewWorkSession(timeStart, timeEnd time.Time)
+	StopWorkSession()
+	ActiveToday() bool
+	ReadyToWorkNow() bool
+	NewDaySession()
+	Rest()
+}
 
 type driver struct {
 	id           uuid.UUID
@@ -50,7 +60,7 @@ func NewDriverB() Driver {
 
 func (d *driver) ID() uuid.UUID { return d.id }
 
-func newDriver(sets driverSets) Driver { return &driver{sets: sets} }
+func newDriver(sets driverSets) Driver { return &driver{id: uuid.New(), sets: sets} }
 
 func (d *driver) NewWorkSession(timeStart time.Time, timeEnd time.Time) {
 	d.timeStart = timeStart

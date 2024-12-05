@@ -6,50 +6,9 @@ import (
 	"github.com/google/uuid"
 	"siaod/course/clock"
 	_ "siaod/course/clock"
-	"time"
+	"siaod/course/pkg/bus"
+	station2 "siaod/course/pkg/driverhub"
 )
-
-type Point struct {
-	ID   uuid.UUID
-	Name string
-}
-
-type Station interface {
-	GetID() uuid.UUID
-	To() int
-	From() int
-}
-type Path struct {
-	Points  []Point
-	Number  int
-	PathDur time.Duration
-}
-
-func (p *Point) GetID() uuid.UUID {
-	return p.ID
-}
-func (p *Path) Last() Point {
-	return p.Points[len(p.Points)-1]
-}
-
-func (p *Path) GetNext(point Point) Point {
-	for i := len(p.Points) - 1; i > 0; i-- {
-		if p.Points[i].ID == point.ID {
-			return p.Points[i-1]
-		}
-	}
-	return Point{}
-}
-
-type Driver interface {
-	ID() uuid.UUID
-	NewWorkSession(timeStart, timeEnd time.Time)
-	StopWorkSession()
-	ActiveToday() bool
-	ReadyToWorkNow() bool
-	NewDaySession()
-	Rest()
-}
 
 //type TimeTable interface {
 //	GetDriveTime(prev, next Point) time.Time
@@ -68,13 +27,13 @@ func Simulation(ctx context.Context) {
 		Number: 1,
 	}
 
-	bus := &Bus{
+	bus := &bus.Bus{
 		len:    0,
 		cap:    50,
 		path:   path,
 		next:   path.Points[0],
 		last:   path.Points[0],
-		driver: NewDriverA(),
+		driver: station2.NewDriverA(),
 	}
 
 	// Подписываем автобус на тики часов
