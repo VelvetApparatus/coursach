@@ -34,7 +34,6 @@ func NewBusStationBuilder() *BusStationBuilder {
 func (builder *BusStationBuilder) Build(tt timetable.TimeTable) *BusStation {
 	station := BusStation{
 		station: tt.GetStationByID(builder.StationID),
-		mu:      sync.Mutex{},
 		buses:   make(map[uuid.UUID]bus.Bus),
 	}
 	maps.Copy(station.buses, builder.buses)
