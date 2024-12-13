@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/google/uuid"
-	"siaod/course/clock"
 	_ "siaod/course/clock"
 	"siaod/course/pkg/bus"
+	"siaod/course/pkg/clock"
 	station2 "siaod/course/pkg/driverhub"
 )
 

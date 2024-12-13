@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
-	"siaod/course/clock"
+	"siaod/course/pkg/clock"
 	"siaod/course/pkg/consts"
 	"siaod/course/pkg/driver"
 	"siaod/course/pkg/path"

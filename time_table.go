@@ -2,7 +2,7 @@ package course
 
 import (
 	"github.com/google/uuid"
-	"siaod/course/clock"
+	"siaod/course/pkg/clock"
 	"sync"
 	"time"
 )

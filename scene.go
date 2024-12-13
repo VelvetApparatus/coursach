@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"log"
-	"siaod/course/clock"
 	"siaod/course/pkg/bus"
+	"siaod/course/pkg/clock"
 )
 
 type Scene struct {

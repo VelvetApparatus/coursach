@@ -2,7 +2,9 @@ package driver
 
 import (
 	"github.com/google/uuid"
-	"siaod/course/clock"
+	"siaod/course/pkg/clock"
+	"siaod/course/pkg/path"
+	"slices"
 	"time"
 )
 
@@ -14,7 +16,17 @@ type Driver interface {
 	ReadyToWorkNow() bool
 	NewDaySession()
 	Rest()
+	Type() DriverType
+	NeedsRest(ps []path.Path) bool
+	RestDur() time.Duration
 }
+
+type DriverType = int
+
+const (
+	DriverA = iota
+	DriverB
+)
 
 type driver struct {
 	id           uuid.UUID
@@ -36,6 +48,7 @@ type driverSets struct {
 	restCount    int64
 	workTimeDays int
 	weekendDays  int
+	typ          DriverType
 }
 
 func NewDriverA() Driver {
@@ -45,6 +58,7 @@ func NewDriverA() Driver {
 		restCount:    1,
 		workTimeDays: 5,
 		weekendDays:  2,
+		typ:          DriverA,
 	})
 }
 
@@ -55,6 +69,7 @@ func NewDriverB() Driver {
 		restCount:    12,
 		workTimeDays: 5,
 		weekendDays:  2,
+		typ:          DriverB,
 	})
 }
 
@@ -95,4 +110,28 @@ func (d *driver) NewDaySession() {
 
 func (d *driver) Rest() {
 	d.restTimeEnd = clock.C().Now().Add(time.Duration(d.sets.restTimeDur.Milliseconds() / d.sets.restCount))
+}
+
+func (d *driver) Type() DriverType { return d.sets.typ }
+
+func (d *driver) NeedsRest(ps []path.Path) bool {
+	slices.SortFunc(ps, func(a, b path.Path) int {
+		if a.StartTime.Before(b.StartTime) {
+			return 1
+		}
+		return -1
+	})
+	var timeInWork time.Duration
+	for _, p := range ps {
+		// time in drive
+		timeInWork += p.EndTime.Sub(p.StartTime)
+		if timeInWork > d.sets.workTimeDur {
+			return true
+		}
+	}
+	return false
+}
+
+func (d *driver) RestDur() time.Duration {
+	return d.sets.restTimeDur
 }
