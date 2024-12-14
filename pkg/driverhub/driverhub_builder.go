@@ -2,6 +2,7 @@ package driverhub
 
 import (
 	"github.com/google/uuid"
+	"maps"
 	"siaod/course/pkg/consts"
 	"siaod/course/pkg/driver"
 	"siaod/course/pkg/timetable"
@@ -15,6 +16,16 @@ type DriverHubBuilder struct {
 	mu        sync.Mutex
 
 	sets driverHubSets
+}
+
+func NewDriverHubBuilder() *DriverHubBuilder {
+	return &DriverHubBuilder{}
+}
+
+func (dh *DriverHubBuilder) Build() *DriverHub {
+	d := DriverHub{}
+	maps.Copy(dh.drivers, d.drivers)
+	return &d
 }
 
 type driverHubSets struct {

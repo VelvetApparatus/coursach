@@ -1,8 +1,10 @@
-package timetable
+package ttv1
 
 import (
 	"github.com/google/uuid"
+	"maps"
 	"siaod/course/pkg/path"
+	"siaod/course/pkg/timetable"
 	"sync"
 	"time"
 )
@@ -18,25 +20,21 @@ type TimetableBuilder struct {
 	stationsDistances map[uuid.UUID]map[uuid.UUID]time.Duration
 	stations          map[uuid.UUID]path.Station
 	mu                sync.Mutex
-
-	cfg Config
 }
 
-type DstItem struct {
-	To   uuid.UUID
-	From uuid.UUID
-	Dur  time.Duration
+func NewBuilder() *TimetableBuilder {
+	return &TimetableBuilder{}
 }
 
-func NewBuilder(cfg Config) *TimetableBuilder {
-	return &TimetableBuilder{cfg: cfg}
+func (builder *TimetableBuilder) Build() timetable.TimeTable {
+	t := tt{}
+	maps.Copy(builder.stations, t.stations)
+	maps.Copy(builder.paths, t.paths)
+	maps.Copy(builder.stationsDistances, t.stationsDistances)
+	return &t
 }
 
-func (builder *TimetableBuilder) Build() TimeTable {
-	return NewTimeTable()
-}
-
-func (builder *TimetableBuilder) AddPath(p path.Path, dstItems []DstItem) {
+func (builder *TimetableBuilder) AddPath(p path.Path, dstItems []path.DstItem) {
 	if builder.pathExists(p.ID) {
 		return
 	}
