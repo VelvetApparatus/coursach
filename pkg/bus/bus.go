@@ -8,7 +8,7 @@ import (
 	"siaod/course/pkg/consts"
 	"siaod/course/pkg/driver"
 	"siaod/course/pkg/path"
-	"siaod/course/pkg/timetable"
+	"siaod/course/pkg/timetable/ttv1"
 	"time"
 )
 
@@ -37,7 +37,7 @@ func (b *Bus) GetPosition() path.Point {
 	return b.last
 }
 
-func (b *Bus) StopAndDriveNext(tt timetable.TimeTable) error {
+func (b *Bus) StopAndDriveNext(tt *ttv1.TimeTable) error {
 
 	if b.next.ID() == b.path.Last().ID() {
 		return consts.BusReachedEndOfPathErr
@@ -72,7 +72,7 @@ func (b *Bus) toStation(station path.Station) {
 	b.len = min(b.len-station.To(), 0)
 }
 
-func (b *Bus) StartPathDrive(ctx context.Context, tt timetable.TimeTable) error {
+func (b *Bus) StartPathDrive(ctx context.Context, tt *ttv1.TimeTable) error {
 	b.onRide = true
 	ticker := clock.C().Subscribe()
 	for {
@@ -94,7 +94,7 @@ func (b *Bus) StartPathDrive(ctx context.Context, tt timetable.TimeTable) error 
 	}
 }
 
-func (b *Bus) GetStopTime(tt timetable.TimeTable) time.Time {
+func (b *Bus) GetStopTime(tt *ttv1.TimeTable) time.Time {
 	return clock.C().Now().Add(tt.GetDriveTime(b.last, b.next))
 }
 

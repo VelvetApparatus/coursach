@@ -3,12 +3,12 @@ package optimizer
 import (
 	"siaod/course/pkg/driverhub"
 	"siaod/course/pkg/station"
-	"siaod/course/pkg/timetable"
+	"siaod/course/pkg/timetable/ttv1"
 )
 
 type Optimizer interface {
 	Optimize(
-		tt timetable.TimeTable,
+		tt *ttv1.TimeTable,
 		buses *station.BusStation,
 		drvs *driverhub.DriverHub,
 	)

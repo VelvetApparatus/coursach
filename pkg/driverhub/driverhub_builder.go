@@ -5,7 +5,7 @@ import (
 	"maps"
 	"siaod/course/pkg/consts"
 	"siaod/course/pkg/driver"
-	"siaod/course/pkg/timetable"
+	"siaod/course/pkg/timetable/ttv1"
 	"sync"
 	"time"
 )
@@ -19,12 +19,16 @@ type DriverHubBuilder struct {
 }
 
 func NewDriverHubBuilder() *DriverHubBuilder {
-	return &DriverHubBuilder{}
+	return &DriverHubBuilder{
+		drivers: make(map[uuid.UUID]driver.Driver),
+	}
 }
 
 func (dh *DriverHubBuilder) Build() *DriverHub {
-	d := DriverHub{}
-	maps.Copy(dh.drivers, d.drivers)
+	d := DriverHub{
+		drivers: make(map[uuid.UUID]driver.Driver),
+	}
+	maps.Copy(d.drivers, dh.drivers)
 	return &d
 }
 
@@ -33,7 +37,7 @@ type driverHubSets struct {
 }
 
 func (dh *DriverHubBuilder) GetFreeDriver(
-	tt timetable.TimeTable,
+	tt *ttv1.TimeTable,
 	timeTo time.Time,
 ) (drv driver.Driver, err error) {
 	dh.mu.Lock()

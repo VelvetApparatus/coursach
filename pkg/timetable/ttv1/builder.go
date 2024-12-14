@@ -4,7 +4,6 @@ import (
 	"github.com/google/uuid"
 	"maps"
 	"siaod/course/pkg/path"
-	"siaod/course/pkg/timetable"
 	"sync"
 	"time"
 )
@@ -23,14 +22,22 @@ type TimetableBuilder struct {
 }
 
 func NewBuilder() *TimetableBuilder {
-	return &TimetableBuilder{}
+	return &TimetableBuilder{
+		paths:             map[uuid.UUID]path.Path{},
+		stationsDistances: map[uuid.UUID]map[uuid.UUID]time.Duration{},
+		stations:          map[uuid.UUID]path.Station{},
+	}
 }
 
-func (builder *TimetableBuilder) Build() timetable.TimeTable {
-	t := tt{}
-	maps.Copy(builder.stations, t.stations)
-	maps.Copy(builder.paths, t.paths)
-	maps.Copy(builder.stationsDistances, t.stationsDistances)
+func (builder *TimetableBuilder) Build() *TimeTable {
+	t := TimeTable{
+		stations:          make(map[uuid.UUID]path.Station),
+		paths:             make(map[uuid.UUID]path.Path),
+		stationsDistances: make(map[uuid.UUID]map[uuid.UUID]time.Duration),
+	}
+	maps.Copy(t.stations, builder.stations)
+	maps.Copy(t.paths, builder.paths)
+	maps.Copy(t.stationsDistances, builder.stationsDistances)
 	return &t
 }
 
@@ -56,6 +63,8 @@ func (builder *TimetableBuilder) AddPath(p path.Path, dstItems []path.DstItem) {
 		}
 	}
 
+	builder.paths[p.ID] = p
+
 }
 
 func (builder *TimetableBuilder) stationExists(stationID uuid.UUID) bool {
@@ -75,6 +84,9 @@ func (builder *TimetableBuilder) pathExists(pathID uuid.UUID) bool {
 func (builder *TimetableBuilder) dstExists(src uuid.UUID, dst uuid.UUID) bool {
 	builder.mu.Lock()
 	defer builder.mu.Unlock()
+	if _, present := builder.stationsDistances[src]; !present {
+		return false
+	}
 	_, way1 := builder.stationsDistances[src][dst]
 	_, way2 := builder.stationsDistances[dst][src]
 	return way1 && way2
@@ -95,6 +107,13 @@ func (builder *TimetableBuilder) addDistance(
 	builder.mu.Lock()
 	defer builder.mu.Unlock()
 
+	if _, present := builder.stationsDistances[src]; !present {
+		builder.stationsDistances[src] = make(map[uuid.UUID]time.Duration)
+	}
+
+	if _, present := builder.stationsDistances[dst]; !present {
+		builder.stationsDistances[dst] = make(map[uuid.UUID]time.Duration)
+	}
 	builder.stationsDistances[src][dst] = distance
 	builder.stationsDistances[dst][src] = distance
 }

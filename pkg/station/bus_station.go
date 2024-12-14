@@ -2,9 +2,10 @@ package station
 
 import (
 	"github.com/google/uuid"
+	"maps"
 	"siaod/course/pkg/bus"
 	"siaod/course/pkg/path"
-	"siaod/course/pkg/timetable"
+	"siaod/course/pkg/timetable/ttv1"
 	"sync"
 	"time"
 )
@@ -13,6 +14,14 @@ type BusStation struct {
 	station path.Station
 	mu      sync.RWMutex
 	buses   map[uuid.UUID]bus.Bus
+}
+
+func (bst *BusStation) Buses() map[uuid.UUID]bus.Bus {
+	bst.mu.Lock()
+	m := make(map[uuid.UUID]bus.Bus)
+	maps.Copy(m, bst.buses)
+	bst.mu.Unlock()
+	return m
 }
 
 func (bst *BusStation) GetBus(id uuid.UUID) *bus.Bus {
@@ -32,7 +41,7 @@ func (bst *BusStation) Register(b *bus.Bus) {
 }
 
 func (bst *BusStation) GetNotInWork(
-	tt timetable.TimeTable,
+	tt *ttv1.TimeTable,
 	timeTo time.Time,
 ) *bus.Bus {
 	key := bst.getFirst(func(b bus.Bus) bool {

@@ -2,19 +2,25 @@ package greedy
 
 import (
 	"github.com/google/uuid"
+	"log/slog"
+	"siaod/course/optimizer"
 	"siaod/course/pkg/bus"
 	"siaod/course/pkg/driver"
 	"siaod/course/pkg/driverhub"
 	"siaod/course/pkg/path"
 	"siaod/course/pkg/station"
-	"siaod/course/pkg/timetable"
+	"siaod/course/pkg/timetable/ttv1"
 )
 
 type greedy struct {
 }
 
+func NewGreedyOptimizer() optimizer.Optimizer {
+	return &greedy{}
+}
+
 func (g *greedy) Optimize(
-	tt timetable.TimeTable,
+	tt *ttv1.TimeTable,
 	buses *station.BusStation,
 	drvs *driverhub.DriverHub,
 ) {
@@ -30,24 +36,18 @@ func (g *greedy) Optimize(
 			buses.Register(b)
 		}
 
-		driverAID := drvs.GetFirst(func(d driver.Driver) bool {
-			return d.ReadyToWorkNow() && d.Type() == driver.DriverA
-		})
-		driverBID := drvs.GetFirst(func(d driver.Driver) bool {
-			return d.ReadyToWorkNow() && d.Type() == driver.DriverB
-		})
+		drv := drvs.GetNotInWork(tt, p.StartTime)
 
 		var possibleDrvs []driver.Driver
 
 		switch {
-		case driverAID == uuid.Nil && driverBID != uuid.Nil:
-			possibleDrvs = append(possibleDrvs, drvs.GetDriver(driverBID))
-		case driverAID != uuid.Nil && driverBID == uuid.Nil:
-			possibleDrvs = append(possibleDrvs, drvs.GetDriver(driverAID))
-		case driverBID == uuid.Nil && driverAID == uuid.Nil:
+		case drv == nil:
 			possibleDrvs = append(possibleDrvs, driver.NewDriverA(), driver.NewDriverB())
-		default:
-			possibleDrvs = append(possibleDrvs, drvs.GetDriver(driverAID), drvs.GetDriver(driverBID))
+			break
+		case drv.Type() == driver.DriverA:
+			possibleDrvs = append(possibleDrvs, drv)
+		case drv.Type() == driver.DriverB:
+			possibleDrvs = append(possibleDrvs, drv)
 		}
 		paths := make([][]path.Path, len(possibleDrvs))
 		for i, _ := range possibleDrvs {
@@ -83,13 +83,40 @@ func (g *greedy) Optimize(
 				bestDriver = possibleDrvs[i]
 			}
 		}
-
-		drvs.Register(bestDriver)
+		if drvs.GetDriver(bestDriver.ID()) == nil {
+			slog.Info(
+				"greedy-optimizer",
+				slog.String("driverID", bestDriver.ID().String()),
+				slog.Int("type", bestDriver.Type()),
+				slog.String("status", "hired"),
+			)
+			drvs.Register(bestDriver)
+		}
 
 		for _, pdx := range bestPathArr {
 			tt.AssignDriverToPath(pdx.ID, bestDriver.ID())
 			tt.AssignBusToPath(pdx.ID, b.ID)
 		}
 
+	}
+
+	last := tt.GetEach(func(p path.Path) bool {
+		return p.BusID == uuid.Nil && p.DriverID == uuid.Nil
+	})
+	for _, p := range last {
+		d := drvs.GetNotInWork(tt, p.StartTime)
+		if d == nil {
+			d = driver.NewDriverA()
+			drvs.Register(d)
+		}
+		tt.AssignDriverToPath(p.ID, d.ID())
+
+		b := buses.GetNotInWork(tt, p.StartTime)
+		if b == nil {
+			b = bus.NewBus(uuid.New())
+			buses.Register(b)
+		}
+
+		tt.AssignBusToPath(p.ID, b.ID)
 	}
 }

@@ -63,11 +63,11 @@ func (p *Path) GetNext(point Point) Point {
 
 func (p *Path) GenDstItems() []DstItem {
 	dstis := make([]DstItem, len(p.Points)-1)
-	for i := 0; i < len(p.Points)-1; i++ {
+	for i := 1; i < len(p.Points)-1; i++ {
 		dstis[i] = DstItem{
 			To:   p.Points[i].ID(),
 			From: p.Points[i-1].ID(),
-			Dur:  time.Duration(rand.Intn(9)+1) * time.Minute,
+			Dur:  time.Duration(rand.Intn(12)+3) * time.Minute,
 		}
 	}
 	return dstis
@@ -93,6 +93,7 @@ func NewPath(
 		ID:        uuid.New(),
 		Number:    number,
 		StartTime: startTime,
+		Points:    points,
 	}
 }
 

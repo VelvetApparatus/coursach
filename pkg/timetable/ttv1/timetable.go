@@ -3,28 +3,27 @@ package ttv1
 import (
 	"github.com/google/uuid"
 	"siaod/course/pkg/path"
-	"siaod/course/pkg/timetable"
 	"sync"
 	"time"
 )
 
-type tt struct {
+type TimeTable struct {
 	mu                sync.RWMutex
 	paths             map[uuid.UUID]path.Path
 	stationsDistances map[uuid.UUID]map[uuid.UUID]time.Duration
 	stations          map[uuid.UUID]path.Station
 }
 
-func NewTimeTable() timetable.TimeTable { return &tt{} }
+func NewTimeTable() *TimeTable { return &TimeTable{} }
 
-func (t *tt) Paths() map[uuid.UUID]path.Path {
+func (t *TimeTable) Paths() map[uuid.UUID]path.Path {
 	return t.paths
 }
-func (t *tt) PathsLen() int {
+func (t *TimeTable) PathsLen() int {
 	return len(t.paths)
 }
 
-func (t *tt) GetFirstN(n int, fn func(p path.Path) bool) []uuid.UUID {
+func (t *TimeTable) GetFirstN(n int, fn func(p path.Path) bool) []uuid.UUID {
 	res := make([]uuid.UUID, 0, n)
 	t.mu.RLock()
 	defer t.mu.RUnlock()
@@ -39,7 +38,7 @@ func (t *tt) GetFirstN(n int, fn func(p path.Path) bool) []uuid.UUID {
 	return res
 }
 
-func (t *tt) GetPathToTime(timeTo time.Time) uuid.UUID {
+func (t *TimeTable) GetPathToTime(timeTo time.Time) uuid.UUID {
 	ks := t.getEachPath(func(path path.Path) bool {
 		return path.BusID == uuid.Nil &&
 			path.DriverID == uuid.Nil &&
@@ -64,7 +63,7 @@ func (t *tt) GetPathToTime(timeTo time.Time) uuid.UUID {
 	return bestKey
 }
 
-func (t *tt) getEachPath(fn func(path path.Path) bool) []uuid.UUID {
+func (t *TimeTable) getEachPath(fn func(path path.Path) bool) []uuid.UUID {
 	paths := make([]uuid.UUID, 0)
 
 	t.mu.RLock()
@@ -77,7 +76,7 @@ func (t *tt) getEachPath(fn func(path path.Path) bool) []uuid.UUID {
 	return paths
 }
 
-func (t *tt) getFirstPath(fn func(path path.Path) bool) uuid.UUID {
+func (t *TimeTable) getFirstPath(fn func(path path.Path) bool) uuid.UUID {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	for k, v := range t.paths {
@@ -88,7 +87,7 @@ func (t *tt) getFirstPath(fn func(path path.Path) bool) uuid.UUID {
 	return uuid.Nil
 }
 
-func (t *tt) compareEach(fn func(a, b path.Path) bool) uuid.UUID {
+func (t *TimeTable) compareEach(fn func(a, b path.Path) bool) uuid.UUID {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -106,7 +105,7 @@ func (t *tt) compareEach(fn func(a, b path.Path) bool) uuid.UUID {
 	return best
 }
 
-func (t *tt) BusOnTheWayToTime(timeTo time.Time, busID uuid.UUID) bool {
+func (t *TimeTable) BusOnTheWayToTime(timeTo time.Time, busID uuid.UUID) bool {
 	paths := t.getEachPath(func(path path.Path) bool {
 		return path.BusID == busID
 	})
@@ -123,7 +122,7 @@ func (t *tt) BusOnTheWayToTime(timeTo time.Time, busID uuid.UUID) bool {
 	return false
 }
 
-func (t *tt) DriverOnTheWayToTime(timeTo time.Time, driverID uuid.UUID) bool {
+func (t *TimeTable) DriverOnTheWayToTime(timeTo time.Time, driverID uuid.UUID) bool {
 	paths := t.getEachPath(func(path path.Path) bool {
 		return path.BusID == driverID
 	})
@@ -140,7 +139,7 @@ func (t *tt) DriverOnTheWayToTime(timeTo time.Time, driverID uuid.UUID) bool {
 	return false
 }
 
-func (t *tt) GetBusPositionToTime(busID uuid.UUID, timeTo time.Time) uuid.UUID {
+func (t *TimeTable) GetBusPositionToTime(busID uuid.UUID, timeTo time.Time) uuid.UUID {
 	paths := t.getEachPath(func(path path.Path) bool {
 		return path.BusID == busID
 	})
@@ -165,7 +164,7 @@ func (t *tt) GetBusPositionToTime(busID uuid.UUID, timeTo time.Time) uuid.UUID {
 	return uuid.Nil
 }
 
-func (t *tt) GetDriverPositionToTime(driverID uuid.UUID, timeTo time.Time) uuid.UUID {
+func (t *TimeTable) GetDriverPositionToTime(driverID uuid.UUID, timeTo time.Time) uuid.UUID {
 	paths := t.getEachPath(func(path path.Path) bool {
 		return path.DriverID == driverID
 	})
@@ -190,21 +189,21 @@ func (t *tt) GetDriverPositionToTime(driverID uuid.UUID, timeTo time.Time) uuid.
 	return uuid.Nil
 }
 
-func (t *tt) GetStationByID(stationID uuid.UUID) path.Station {
+func (t *TimeTable) GetStationByID(stationID uuid.UUID) path.Station {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	st := t.stations[stationID]
 	return st
 }
 
-func (t *tt) GetDriveTime(src path.Point, dest path.Point) time.Duration {
+func (t *TimeTable) GetDriveTime(src path.Point, dest path.Point) time.Duration {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	dur := t.stationsDistances[src.ID()][dest.ID()]
 	return dur
 }
 
-func (t *tt) AssignDriverToPath(pathID uuid.UUID, driverID uuid.UUID) {
+func (t *TimeTable) AssignDriverToPath(pathID uuid.UUID, driverID uuid.UUID) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	p := t.paths[pathID]
@@ -212,7 +211,7 @@ func (t *tt) AssignDriverToPath(pathID uuid.UUID, driverID uuid.UUID) {
 	t.paths[pathID] = p
 }
 
-func (t *tt) AssignBusToPath(pathID uuid.UUID, busID uuid.UUID) {
+func (t *TimeTable) AssignBusToPath(pathID uuid.UUID, busID uuid.UUID) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	p := t.paths[pathID]
@@ -220,9 +219,21 @@ func (t *tt) AssignBusToPath(pathID uuid.UUID, busID uuid.UUID) {
 	t.paths[pathID] = p
 }
 
-func (t *tt) GetPathByID(pathID uuid.UUID) path.Path {
+func (t *TimeTable) GetPathByID(pathID uuid.UUID) path.Path {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	p := t.paths[pathID]
 	return p
+}
+
+func (t *TimeTable) GetEach(fn func(p path.Path) bool) map[uuid.UUID]path.Path {
+	res := make(map[uuid.UUID]path.Path)
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	for _, p := range t.paths {
+		if fn(p) {
+			res[p.ID] = p
+		}
+	}
+	return res
 }
