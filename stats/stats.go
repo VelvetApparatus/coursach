@@ -8,6 +8,7 @@ import (
 	"course/pkg/timetable/ttv1"
 	"fmt"
 	"os"
+	"strings"
 )
 
 type DriversStats struct {
@@ -62,11 +63,8 @@ func (ds *DriversStats) Collect(
 }
 
 func (ds *DriversStats) SaveStatistics(filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("could not create file: %v", err)
-	}
-	defer f.Close()
+
+	var builder strings.Builder
 
 	// Подсчет средних значений
 	averageStats := stat{}
@@ -92,24 +90,33 @@ func (ds *DriversStats) SaveStatistics(filename string) error {
 	}
 
 	// Вывод средних значений
-	fmt.Fprintf(f, "Средние значения по всем экспериментам:\n")
-	fmt.Fprintf(f, "Drivers Count: %d\n", averageStats.driversCount)
-	fmt.Fprintf(f, "Bus Count: %d\n", averageStats.busCount)
-	fmt.Fprintf(f, "Average Path On Driver: %.2f\n", averageStats.averagePathOnDriver)
-	fmt.Fprintf(f, "Average Path On Bus: %.2f\n", averageStats.averagePathOnBus)
-	fmt.Fprintf(f, "Drivers Distribution: %.2f\n", averageStats.drvsDistribution)
-	fmt.Fprintf(f, "\n")
+	builder.WriteString(fmt.Sprintf("## Средние значения по всем экспериментам:\n\n"))
+	builder.WriteString(fmt.Sprintf("Drivers Count: %d\n\n", averageStats.driversCount))
+	builder.WriteString(fmt.Sprintf("Bus Count: %d\n\n", averageStats.busCount))
+	builder.WriteString(fmt.Sprintf("Average Path On Driver: %.2f\n\n", averageStats.averagePathOnDriver))
+	builder.WriteString(fmt.Sprintf("Average Path On Bus: %.2f\n\n", averageStats.averagePathOnBus))
+	builder.WriteString(fmt.Sprintf("Drivers Distribution: %.2f\n\n", averageStats.drvsDistribution))
 
 	// Вывод данных по каждому эксперименту
 	for optimizer, stats := range ds.exps {
-		fmt.Fprintf(f, "Результаты экспериментов для оптимизатора: %s\n", optimizer)
-		fmt.Fprintf(f, "Experiment | Drivers Count | Bus Count | Avg Path/Driver | Avg Path/Bus | Drvs Distribution\n")
-		fmt.Fprintf(f, "-----------------------------------------------------------------------------\n")
+		builder.WriteString(fmt.Sprintf("#### Результаты экспериментов для оптимизатора: %s\n\n", optimizer))
+		builder.WriteString(fmt.Sprintf("Experiment | Drivers Count | Bus Count | Avg Path/Driver | Avg Path/Bus | Drvs Distribution\n"))
+		builder.WriteString(fmt.Sprintf("-----------|---------------|-----------|-----------------|--------------|------------------|\n"))
 		for i, s := range stats {
-			fmt.Fprintf(f, "%10d | %14d | %9d | %15.2f | %13.2f | %17.2f\n",
-				i+1, s.driversCount, s.busCount, s.averagePathOnDriver, s.averagePathOnBus, s.drvsDistribution)
+			builder.WriteString(fmt.Sprintf("| %10d | %14d | %9d | %15.2f | %13.2f | %17.2f | \n",
+				i+1, s.driversCount, s.busCount, s.averagePathOnDriver, s.averagePathOnBus, s.drvsDistribution))
 		}
-		fmt.Fprintf(f, "\n")
+		builder.WriteString("\n\n")
+	}
+	file, err := os.Create(fmt.Sprintf("%s.md", filename))
+	if err != nil {
+		return fmt.Errorf("Ошибка создания файла: %w", err)
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(builder.String())
+	if err != nil {
+		return fmt.Errorf("Ошибка записи в файл: %w", err)
 	}
 
 	return nil

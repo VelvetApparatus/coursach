@@ -45,7 +45,7 @@ func runExp() {
 
 	}
 
-	err := st.SaveStatistics("exps/output/statistics.pdf")
+	err := st.SaveStatistics("exps/output/statistics")
 	if err != nil {
 		log.Fatal(err)
 	}
