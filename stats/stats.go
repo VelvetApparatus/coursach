@@ -51,7 +51,7 @@ func (ds *DriversStats) Collect(
 	s.averagePathOnDriver /= s.driversCount
 
 	adrvs := float64(len(dh.GetEach(func(d driver.Driver) bool { return d.Type() == driver.DriverA })))
-	s.drvsDistribution = s.driversCount / adrvs
+	s.drvsDistribution = adrvs / s.driversCount
 
 	s.busCount = float64(len(bs.Buses()))
 
