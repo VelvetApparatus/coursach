@@ -1,101 +1,136 @@
-package course
+package main
 
 import (
-	"context"
-	"fmt"
 	"github.com/google/uuid"
-	"siaod/course/clock"
-	_ "siaod/course/clock"
+	"math/rand/v2"
+	"siaod/course/optimizer/bruteforce"
+	"siaod/course/optimizer/gen_algorithm"
+	"siaod/course/optimizer/greedy"
+	"siaod/course/pkg/bus"
+	"siaod/course/pkg/clock"
+	_ "siaod/course/pkg/clock"
+	"siaod/course/pkg/driver"
+	"siaod/course/pkg/driverhub"
+	"siaod/course/pkg/path"
+	"siaod/course/pkg/station"
+	"siaod/course/pkg/timetable/ttv1"
+	"siaod/course/presenter"
 	"time"
 )
 
-type Point struct {
-	ID   uuid.UUID
-	Name string
+func main() {
+	tt, drvs, bss := genScene()
+
+	bfTT := tt.Build()
+	bfDrvs := drvs.Build()
+	bfBss := bss.Build()
+	opt := bruteforce.NewBrutForceOptimizer()
+	opt.Optimize(bfTT, bfBss, bfDrvs)
+	prs := presenter.Presenter{}
+	prs.Present("bruteforce", bfTT, bfDrvs, bfBss)
+
+	gTT := tt.Build()
+	gDrvs := drvs.Build()
+	gBss := bss.Build()
+	opt = greedy.NewGreedyOptimizer()
+	opt.Optimize(gTT, gBss, gDrvs)
+	prs = presenter.Presenter{}
+	prs.Present("greedy", gTT, gDrvs, gBss)
+
+	genTT := tt.Build()
+	genDrvs := drvs.Build()
+	genBss := bss.Build()
+	opt = gen_algorithm.New(bruteforce.NewBrutForceOptimizer())
+	opt.Optimize(genTT, genBss, genDrvs)
+	prs = presenter.Presenter{}
+	prs.Present("gen_algo", gTT, gDrvs, gBss)
+
 }
 
-type Station interface {
-	GetID() uuid.UUID
-	To() int
-	From() int
-}
-type Path struct {
-	Points  []Point
-	Number  int
-	PathDur time.Duration
-}
+func genScene() (*ttv1.TimetableBuilder, *driverhub.DriverHubBuilder, *station.BusStationBuilder) {
+	const (
+		//driverACount = 5
+		driverACount = 1
+		//driverBCount = 5
+		driverBCount = 1
+	)
+	bss := []path.Point{
+		{Id: uuid.New(), Name: "bus_station_1", IsBusStation: true},
+		{Id: uuid.New(), Name: "bus_station_2", IsBusStation: true},
+		{Id: uuid.New(), Name: "bus_station_3", IsBusStation: true},
+		{Id: uuid.New(), Name: "bus_station_4", IsBusStation: true},
+		{Id: uuid.New(), Name: "bus_station_5", IsBusStation: true},
+	}
 
-func (p *Point) GetID() uuid.UUID {
-	return p.ID
-}
-func (p *Path) Last() Point {
-	return p.Points[len(p.Points)-1]
-}
-
-func (p *Path) GetNext(point Point) Point {
-	for i := len(p.Points) - 1; i > 0; i-- {
-		if p.Points[i].ID == point.ID {
-			return p.Points[i-1]
+	workStartTime := time.Date(0, 0, 0, 6, 0, 0, 0, time.Local)
+	workEndTime := time.Date(0, 0, 0, 23, 0, 0, 0, time.Local)
+	tt := genTimeTable(bss, 15, workStartTime, workEndTime)
+	stb := station.NewBusStationBuilder()
+	for range bss {
+		for i := 0; i < 5; i++ {
+			stb.AddBus(bus.NewBus(uuid.New()))
 		}
 	}
-	return Point{}
-}
 
-type Driver interface {
-	ID() uuid.UUID
-	NewWorkSession(timeStart, timeEnd time.Time)
-	StopWorkSession()
-	ActiveToday() bool
-	ReadyToWorkNow() bool
-	NewDaySession()
-	Rest()
-}
+	hub := driverhub.NewDriverHubBuilder()
 
-//type TimeTable interface {
-//	GetDriveTime(prev, next Point) time.Time
-//	GetStationByID(stationID uuid.UUID) Station
-//}
-
-// Simulation запускает эмуляцию
-func Simulation(ctx context.Context) {
-	// Инициализация автобусов
-	path := &Path{
-		Points: []Point{
-			{ID: uuid.New(), Name: "Station A"},
-			{ID: uuid.New(), Name: "Station B"},
-			{ID: uuid.New(), Name: "Station C"},
-		},
-		Number: 1,
+	for i := 0; i < driverACount; i++ {
+		hub.AddDriver(driver.NewDriverA())
+	}
+	for i := 0; i < driverBCount; i++ {
+		hub.AddDriver(driver.NewDriverB())
 	}
 
-	bus := &Bus{
-		len:    0,
-		cap:    50,
-		path:   path,
-		next:   path.Points[0],
-		last:   path.Points[0],
-		driver: NewDriverA(),
-	}
+	return tt, hub, stb
+}
 
-	// Подписываем автобус на тики часов
-	busTick := clock.C().Subscribe()
+func genTimeTable(
+	busStations []path.Point,
+	pathsCount int,
+	workStart time.Time,
+	workEnd time.Time,
+) *ttv1.TimetableBuilder {
+	ttb := ttv1.NewBuilder()
+	inc := increment()
+	rndTime := randTime(workEnd, workStart)
+	for i := 0; i < pathsCount; i++ {
+		src := rand.IntN(len(busStations))
+		dst := rand.IntN(len(busStations))
+		stationsCount := rand.IntN(10) + 10
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case t := <-busTick:
-				if t.After(bus.nextStopTime) {
-					err := bus.StopAndDriveNext(nil) // TimeTable пока пустой, но можно настроить
-					if err != nil {
-						fmt.Printf("Bus error: %v\n", err)
-					} else {
-						fmt.Printf("Bus moved to: %s at %s\n", bus.last.Name, t.Format("15:04"))
-					}
-				}
-			}
+		p := path.NewPath(busStations[src], busStations[dst], inc(), stationsCount, time.Now())
+		dstItems := p.GenDstItems()
+
+		var rideDur time.Duration
+		for _, item := range dstItems {
+			rideDur += item.Dur
 		}
-	}()
 
+		for i := 0; i < 12; i++ {
+			p.StartTime = rndTime()
+			p.ID = uuid.New()
+			p.EndTime = p.StartTime.Add(rideDur)
+			ttb.AddPath(p, dstItems)
+		}
+	}
+	return ttb
+}
+
+func increment() func() int {
+	inc := 0
+
+	return func() int {
+		inc++
+		return inc
+	}
+}
+
+func randTime(from time.Time, to time.Time) func() time.Time {
+	fromH := from.Hour()
+	toH := to.Hour()
+	minArr := []int{5, 10, 15, 20, 25, 30, 35, 45, 50, 55, 0}
+	return func() time.Time {
+		year, month, day := clock.C().Now().Date()
+		return time.Date(year, month, day, rand.IntN(fromH-toH)+toH, minArr[rand.IntN(len(minArr))], 0, 0, time.Local)
+	}
 }
