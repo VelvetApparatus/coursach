@@ -1,9 +1,9 @@
 package driverhub
 
 import (
+	"course/pkg/driver"
 	"github.com/google/uuid"
 	"maps"
-	"siaod/course/pkg/driver"
 	"sync"
 )
 

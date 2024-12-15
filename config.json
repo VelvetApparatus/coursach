@@ -1,0 +1,9 @@
+{
+  "experiments_count": 10,
+  "initial_driver_a_count": 1,
+  "initial_driver_b_count": 1,
+  "initial_bus_stations_count": 5,
+  "distinct_path_count": 15,
+  "time_series_paths_count": 12,
+  "initial_bus_count": 5
+}

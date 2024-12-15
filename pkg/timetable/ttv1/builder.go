@@ -1,9 +1,9 @@
 package ttv1
 
 import (
+	"course/pkg/path"
 	"github.com/google/uuid"
 	"maps"
-	"siaod/course/pkg/path"
 	"sync"
 	"time"
 )

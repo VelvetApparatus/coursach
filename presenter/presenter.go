@@ -1,13 +1,13 @@
 package presenter
 
 import (
+	"course/pkg/driverhub"
+	"course/pkg/path"
+	"course/pkg/station"
+	"course/pkg/timetable/ttv1"
 	"fmt"
 	"github.com/google/uuid"
 	"os"
-	"siaod/course/pkg/driverhub"
-	"siaod/course/pkg/path"
-	"siaod/course/pkg/station"
-	"siaod/course/pkg/timetable/ttv1"
 	"strings"
 )
 

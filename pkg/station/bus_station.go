@@ -1,11 +1,11 @@
 package station
 
 import (
+	"course/pkg/bus"
+	"course/pkg/path"
+	"course/pkg/timetable/ttv1"
 	"github.com/google/uuid"
 	"maps"
-	"siaod/course/pkg/bus"
-	"siaod/course/pkg/path"
-	"siaod/course/pkg/timetable/ttv1"
 	"sync"
 	"time"
 )

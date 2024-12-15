@@ -1,9 +1,9 @@
 package station
 
 import (
+	"course/pkg/bus"
 	"github.com/google/uuid"
 	"maps"
-	"siaod/course/pkg/bus"
 	"sync"
 )
 

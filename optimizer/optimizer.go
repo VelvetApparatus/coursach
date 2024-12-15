@@ -1,9 +1,9 @@
 package optimizer
 
 import (
-	"siaod/course/pkg/driverhub"
-	"siaod/course/pkg/station"
-	"siaod/course/pkg/timetable/ttv1"
+	"course/pkg/driverhub"
+	"course/pkg/station"
+	"course/pkg/timetable/ttv1"
 )
 
 type Optimizer interface {

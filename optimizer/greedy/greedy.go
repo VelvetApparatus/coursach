@@ -1,15 +1,15 @@
 package greedy
 
 import (
+	"course/optimizer"
+	"course/pkg/bus"
+	"course/pkg/driver"
+	"course/pkg/driverhub"
+	"course/pkg/path"
+	"course/pkg/station"
+	"course/pkg/timetable/ttv1"
 	"github.com/google/uuid"
 	"log/slog"
-	"siaod/course/optimizer"
-	"siaod/course/pkg/bus"
-	"siaod/course/pkg/driver"
-	"siaod/course/pkg/driverhub"
-	"siaod/course/pkg/path"
-	"siaod/course/pkg/station"
-	"siaod/course/pkg/timetable/ttv1"
 )
 
 type greedy struct {
