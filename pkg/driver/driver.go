@@ -1,8 +1,8 @@
 package driver
 
 import (
+	"course/pkg/path"
 	"github.com/google/uuid"
-	"siaod/course/pkg/path"
 	"slices"
 	"time"
 )

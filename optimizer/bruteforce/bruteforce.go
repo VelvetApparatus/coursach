@@ -1,16 +1,16 @@
 package bruteforce
 
 import (
+	"course/optimizer"
+	bus2 "course/pkg/bus"
+	"course/pkg/driver"
+	"course/pkg/driverhub"
+	"course/pkg/path"
+	"course/pkg/station"
+	"course/pkg/timetable/ttv1"
 	"github.com/google/uuid"
 	"log/slog"
 	"math/rand/v2"
-	"siaod/course/optimizer"
-	bus2 "siaod/course/pkg/bus"
-	"siaod/course/pkg/driver"
-	"siaod/course/pkg/driverhub"
-	"siaod/course/pkg/path"
-	"siaod/course/pkg/station"
-	"siaod/course/pkg/timetable/ttv1"
 	"slices"
 )
 

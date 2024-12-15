@@ -1,14 +1,13 @@
 package gen_algorithm
 
 import (
-	"fmt"
+	"course/optimizer"
+	"course/pkg/bus"
+	"course/pkg/driverhub"
+	"course/pkg/path"
+	"course/pkg/station"
+	"course/pkg/timetable/ttv1"
 	"github.com/google/uuid"
-	"siaod/course/optimizer"
-	"siaod/course/pkg/bus"
-	"siaod/course/pkg/driverhub"
-	"siaod/course/pkg/path"
-	"siaod/course/pkg/station"
-	"siaod/course/pkg/timetable/ttv1"
 	"slices"
 	"time"
 )
@@ -31,10 +30,9 @@ func (g *ga) Optimize(
 
 	// 100 эпох
 	epoch := epochCounter(100)
-	e, next := epoch()
+	_, next := epoch()
 	for next {
-		e, next = epoch()
-		fmt.Printf("epoch %d\n", e)
+		_, next = epoch()
 		g.do(tt, buses, drvs)
 	}
 }

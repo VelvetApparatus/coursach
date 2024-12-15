@@ -1,11 +1,11 @@
 package driverhub
 
 import (
+	"course/pkg/driver"
+	"course/pkg/path"
+	"course/pkg/timetable/ttv1"
 	"github.com/google/uuid"
 	"maps"
-	"siaod/course/pkg/driver"
-	"siaod/course/pkg/path"
-	"siaod/course/pkg/timetable/ttv1"
 	"sync"
 	"time"
 )
@@ -40,7 +40,7 @@ func (dh *DriverHub) GetNotInWork(
 	tt *ttv1.TimeTable,
 	timeTo time.Time,
 ) driver.Driver {
-	drvs := dh.getEach(func(d driver.Driver) bool {
+	drvs := dh.GetEach(func(d driver.Driver) bool {
 		return !tt.DriverOnTheWayToTime(timeTo, d.ID())
 	})
 
@@ -69,11 +69,7 @@ func (dh *DriverHub) GetNotInWork(
 	return nil
 }
 
-func (dh *DriverHub) GetFirst(fn func(d driver.Driver) bool) uuid.UUID {
-	return dh.getFirst(fn)
-}
-
-func (dh *DriverHub) getEach(fn func(d driver.Driver) bool) map[uuid.UUID]driver.Driver {
+func (dh *DriverHub) GetEach(fn func(d driver.Driver) bool) map[uuid.UUID]driver.Driver {
 	res := make(map[uuid.UUID]driver.Driver)
 	dh.mu.RLock()
 	defer dh.mu.RUnlock()
@@ -85,7 +81,7 @@ func (dh *DriverHub) getEach(fn func(d driver.Driver) bool) map[uuid.UUID]driver
 	return res
 }
 
-func (dh *DriverHub) getFirst(fn func(d driver.Driver) bool) uuid.UUID {
+func (dh *DriverHub) GetFirst(fn func(d driver.Driver) bool) uuid.UUID {
 	dh.mu.RLock()
 	defer dh.mu.RUnlock()
 	for k, v := range dh.drivers {
