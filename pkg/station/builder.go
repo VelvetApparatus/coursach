@@ -39,37 +39,6 @@ func (builder *BusStationBuilder) WithoutAutoBuy() {
 	builder.sets.autoBuy = false
 }
 
-//func (builder *BusStationBuilder) GetFreeBus(
-//	tt timetable.TimeTable,
-//	timeTo time.Time,
-//) (b bus.Bus, err error) {
-//	builder.mu.Lock()
-//	defer builder.mu.Unlock()
-//	for _, v := range builder.buses {
-//		// проверяем, не имеет ли автобус уже активного рейса
-//		if tt.BusOnTheWayToTime(timeTo, v.ID) {
-//			continue
-//		}
-//		// если id станций не совпадают -- находится в другом автопарке
-//		//if stationID := tt.GetBusPositionToTime(v.ID, timeTo); stationID != builder.stationID {
-//			continue
-//		}
-//		b = v
-//		break
-//	}
-//
-//	// если по итоги обхода по всем автобусам в таксопарке не нашлось ни одного свободного автобуса
-//	if b.ID == uuid.Nil {
-//		// если не можем докупать
-//		if !builder.sets.autoBuy {
-//			return bus.Bus{}, consts.NoFreeBussesOnStationError
-//		}
-//		busID := builder.buyNewBus()
-//		b = builder.buses[busID]
-//	}
-//	return b, nil
-//}
-
 func (builder *BusStationBuilder) buyNewBus() uuid.UUID {
 	bus := bus.NewBus(uuid.New())
 	builder.mu.Lock()
@@ -78,9 +47,6 @@ func (builder *BusStationBuilder) buyNewBus() uuid.UUID {
 	return bus.ID
 }
 
-// AddBus
-// Используем метод в случае если другой автопак купил новый автобус и
-// в рамках некоторых рейсов он может оказаться здесь
 func (builder *BusStationBuilder) AddBus(bus *bus.Bus) {
 	builder.mu.Lock()
 	defer builder.mu.Unlock()

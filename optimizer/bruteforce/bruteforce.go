@@ -26,9 +26,6 @@ func (bf *bruteForce) Optimize(
 	drvs *driverhub.DriverHub,
 ) {
 	for _, p := range tt.Paths() {
-		//counter := 0
-		//restart:
-		//counter += 1
 		if p.DriverID == uuid.Nil {
 			drv := drvs.GetNotInWork(tt, p.StartTime)
 			if drv == nil {
@@ -58,15 +55,6 @@ func (bf *bruteForce) Optimize(
 				}
 				return 1
 			})
-
-			//if drv.NeedsRest(ps) {
-			//	if counter > 3 {
-			//		slog.Info("skipped", slog.String("pathID", p.ID.String()))
-			//		continue
-			//	}
-			//	goto restart
-			//
-			//}
 
 			tt.AssignDriverToPath(p.ID, drv.ID())
 		}

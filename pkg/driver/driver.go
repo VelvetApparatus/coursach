@@ -2,7 +2,6 @@ package driver
 
 import (
 	"github.com/google/uuid"
-	"siaod/course/pkg/clock"
 	"siaod/course/pkg/path"
 	"slices"
 	"time"
@@ -10,15 +9,10 @@ import (
 
 type Driver interface {
 	ID() uuid.UUID
-	NewWorkSession(timeStart, timeEnd time.Time)
-	StopWorkSession()
-	ActiveToday() bool
-	ReadyToWorkNow() bool
-	NewDaySession()
-	Rest()
 	Type() DriverType
 	NeedsRest(ps []path.Path) bool
 	RestDur() time.Duration
+	WorkDur() time.Duration
 }
 
 type DriverType = int
@@ -77,41 +71,6 @@ func (d *driver) ID() uuid.UUID { return d.id }
 
 func newDriver(sets driverSets) Driver { return &driver{id: uuid.New(), sets: sets} }
 
-func (d *driver) NewWorkSession(timeStart time.Time, timeEnd time.Time) {
-	d.timeStart = timeStart
-	d.timeEnd = timeEnd
-}
-
-func (d *driver) StopWorkSession() {
-	d.workCounterH -= int(d.timeEnd.Sub(d.timeStart).Hours())
-	if d.workCounterH < 0 {
-		d.Rest()
-	}
-}
-
-func (d *driver) ActiveToday() bool    { return d.active }
-func (d *driver) ReadyToWorkNow() bool { return clock.C().Now().After(d.restTimeEnd) }
-
-func (d *driver) NewDaySession() {
-	if d.active {
-		d.workCounter--
-		if d.workCounter < 0 {
-			d.active = false
-			d.weekendCounter = d.sets.weekendDays
-		}
-		return
-	}
-	d.weekendCounter--
-	if d.weekendCounter < 0 {
-		d.active = true
-		d.workCounter = d.sets.workTimeDays
-	}
-}
-
-func (d *driver) Rest() {
-	d.restTimeEnd = clock.C().Now().Add(time.Duration(d.sets.restTimeDur.Milliseconds() / d.sets.restCount))
-}
-
 func (d *driver) Type() DriverType { return d.sets.typ }
 
 func (d *driver) NeedsRest(ps []path.Path) bool {
@@ -135,3 +94,5 @@ func (d *driver) NeedsRest(ps []path.Path) bool {
 func (d *driver) RestDur() time.Duration {
 	return d.sets.restTimeDur
 }
+
+func (d *driver) WorkDur() time.Duration { return d.sets.workTimeDur }

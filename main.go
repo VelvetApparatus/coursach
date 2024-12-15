@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 	"math/rand/v2"
 	"siaod/course/optimizer/bruteforce"
+	"siaod/course/optimizer/gen_algorithm"
 	"siaod/course/optimizer/greedy"
 	"siaod/course/pkg/bus"
 	"siaod/course/pkg/clock"
@@ -35,6 +36,14 @@ func main() {
 	opt.Optimize(gTT, gBss, gDrvs)
 	prs = presenter.Presenter{}
 	prs.Present("greedy", gTT, gDrvs, gBss)
+
+	genTT := tt.Build()
+	genDrvs := drvs.Build()
+	genBss := bss.Build()
+	opt = gen_algorithm.New(bruteforce.NewBrutForceOptimizer())
+	opt.Optimize(genTT, genBss, genDrvs)
+	prs = presenter.Presenter{}
+	prs.Present("gen_algo", gTT, gDrvs, gBss)
 
 }
 
