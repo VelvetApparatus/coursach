@@ -40,7 +40,9 @@ func runExp() {
 			opt.Optimize(tt, bs, dh)
 			st.Collect(tt, dh, bs, k)
 
-			pres.Present(fmt.Sprintf("exps/output/%s/%d", k, expCount+1), tt, dh, bs)
+			if expCount%10 == 0 {
+				pres.Present(fmt.Sprintf("exps/output/%s/%d", k, expCount+1), tt, dh, bs)
+			}
 		}
 
 	}
