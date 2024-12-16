@@ -23,15 +23,10 @@ const (
 )
 
 type driver struct {
-	id           uuid.UUID
-	timeStart    time.Time
-	timeEnd      time.Time
-	restTimeEnd  time.Time
-	workCounterH int
-
-	workCounter    int
-	weekendCounter int
-	active         bool
+	id          uuid.UUID
+	timeStart   time.Time
+	timeEnd     time.Time
+	restTimeEnd time.Time
 
 	sets driverSets
 }
@@ -58,8 +53,8 @@ func NewDriverA() Driver {
 
 func NewDriverB() Driver {
 	return newDriver(driverSets{
-		restTimeDur:  4 * time.Hour,
-		workTimeDur:  24 * time.Hour,
+		restTimeDur:  20 * time.Minute,
+		workTimeDur:  18 * time.Hour,
 		restCount:    12,
 		workTimeDays: 5,
 		weekendDays:  2,
